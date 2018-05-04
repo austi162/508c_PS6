@@ -450,3 +450,16 @@ rdist_from~4 |   1.072271    .065673    16.33   0.000     .943550
 . 
 end of do-file
 -> . browse
+-> . exit, clear
+--Break--  (Type BREAK to send real break back to calling program)
+-> . BREAK
+sending Break to calling program...
+--Break--
+r(1);
+
+end of do-file
+
+--Break--
+r(1);
+
+. exit, clear

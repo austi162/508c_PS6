@@ -297,12 +297,46 @@ students to graduate in 4 years.*/
 ********************************************************************************
 **                                   P7                                       **
 ********************************************************************************
-/*Suppose we thought that the graduation discontinuities were driven by an effect of ever being placed on
-probation, rather than an effect of being placed on probation specifically after the first year. Use twostage
-least squares to estimate how ever being placed on probation affects the probability of graduating
-within 4, 5, and 6 years. You do not need to perform separate analyses by high school ranking. How do
-your estimates relate to your results for questions (3) and (6)?*/ 
+/*Suppose we thought that the graduation discontinuities were driven by an effect
+of ever being placed on probation, rather than an effect of being placed on probation 
+specifically after the first year. Use twostage least squares to estimate how ever 
+being placed on probation affects the probability of graduating within 4, 5, and 
+6 years. You do not need to perform separate analyses by high school ranking. How 
+do your estimates relate to your results for questions (3) and (6)?*/ 
 
+*2SLS to estimate how ever being placed on probation affects probability of graduating
+* in 4 years.
 
-**
+**Interact endogenous variable (probation_ever) with running variable polinomial 
+**terms for full RF regression:
+foreach i in dist_from_cut dist_from_cut2 dist_from_cut3 dist_from_cut4 {
+	gen T`i' = probation_ever*`i'
+}
+*Define locals for following regressions
+local running dist_from_cut dist_from_cut2 dist_from_cut3 dist_from_cut4
+local cutoff rdist_from_cut rdist_from_cut2 rdist_from_cut3 rdist_from_cut4
+local controls male age_at_entry bpl_north_america english hsgrade_pct
 
+local treated Tdist_from_cut Tdist_from_cut2 Tdist_from_cut3 Tdist_from_cut4  
+
+foreach i of varlist gradin4 gradin5 gradin6 {
+	qui reg probation_ever dist_from_cut `running' `cutoff' 
+	estimates store first_stage
+	qui reg `i' dist_from_cut `running' `treated' 
+	estimates store reduced_form
+	suest first_stage reduced_form, r
+	nlcom [reduced_form_mean]dist_from_cut/[first_stage_mean]dist_from_cut
+	pause
+}
+
+/*Those ever on probation after just falling into probation their first year were
+10 percentage-points less likely to graduate in 4 years than those who were never
+on probation; significant at 99% CI.*/
+
+/*Those ever on probation after just falling into probation their first year were
+12 percentage-points less likely to graduate in 5 years than those who were never
+on probation; significant at 99% CI.*/
+
+/*Those ever on probation after just falling into probation their first year were
+11 percentage-points less likely to graduate in 6 years than those who were never
+on probation; significant at 99% CI.*/
