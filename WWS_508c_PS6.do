@@ -6,7 +6,7 @@
 
 /* Credit: Somya Bajaj, Joelle Gamble, Anastasia Korolkova, Luke Strathmann, Chris Austin
 Last modified by: Chris Austin
-Last modified on: 5/15/18 */
+Last modified on: 5/14/18 */
 
 clear all
 
@@ -24,7 +24,6 @@ pause on
 ssc install outreg2
 ssc install mdesc
 
-
 ********************************************************************************
 **                                   P1                                       **
 ********************************************************************************
@@ -35,6 +34,7 @@ is it large or small in comparison to other observed noise in the histogram? Do
 you think your results represent a threat to the regression discontinuity design?*/
 
 mdesc
+
 su
 
 *Testing out different BWs. .25 seems to be preferrable. 
@@ -43,7 +43,6 @@ hist dist_from_cut,start(-2) w(0.05) xline(0) saving(histogram_1,replace)
 hist dist_from_cut,start(-2) w(0.1) xline(0) saving(histogram_2,replace)
 
 hist dist_from_cut,start(-2) w(0.25) xline(0) saving(histogram_3,replace)
-
 
 /*There appears to be slight bunching, but it is hard to discern if it is statistically
 significant. If it is, then we would have reason to believe that students knew of
@@ -98,54 +97,51 @@ while `i' <= 4 {
 }
 
 *Generate Eligibility Z_i: right if scored above threshold
-gen right = dist_from_cut > 0
+gen left = dist_from_cut < 0
 
-*Interact eligibility term "right" with running variable polinomial terms:
+*Interact eligibility term "left" with running variable polinomial terms:
 foreach i in dist_from_cut dist_from_cut2 dist_from_cut3 dist_from_cut4 {
-	gen r`i' = right*`i'
+	gen l`i' = left*`i'
 }
 
 *Define locals for following regressions
 local running dist_from_cut dist_from_cut2 dist_from_cut3 dist_from_cut4
-local cutoff rdist_from_cut rdist_from_cut2 rdist_from_cut3 rdist_from_cut4
+local cutoff ldist_from_cut ldist_from_cut2 ldist_from_cut3 ldist_from_cut4
 local controls male age_at_entry bpl_north_america english hsgrade_pct
 
 *Effect of falling below cutoff on the probability of placed on probation 1st year:
-reg probation_year1 right `running' `cutoff'
+reg probation_year1 left `running' `cutoff'
 predict probation_year1_hat_poly
 label var probation_year1_hat_poly "Year1 Poly"
 
 *Check robustness by including background covariates; results don't change
-reg probation_year1 right `running' `cutoff' `controls'
+reg probation_year1 left `running' `cutoff' `controls'
 predict probation_year1_hat_poly_c
 label var probation_year1_hat_poly_c "Year1 Poly w/ Controls"
 
 *Effect of falling below cutoff on the probability of placed on probation ever:
-reg probation_ever right `running' `cutoff'
+reg probation_ever left `running' `cutoff'
 predict probation_ever_hat_poly
 label var probation_ever_hat_poly "Ever Poly"
 
 *Check robustness by including background covariates; results don't change
-reg probation_ever right `running' `cutoff' `controls'
+reg probation_ever left `running' `cutoff' `controls'
 predict probation_ever_hat_poly_c
 label var probation_ever_hat_poly_c "Ever Poly w/ Controls"
 
 *Check local linear results:
-reg probation_year1 right if abs(dist_from_cut)<0.25
-reg probation_year1 right dist_from_cut rdist_from_cut if abs(dist_from_cut)<0.25
+reg probation_year1 left if abs(dist_from_cut)<0.25
+reg probation_year1 left dist_from_cut ldist_from_cut if abs(dist_from_cut)<0.25
 predict probation_year1_hat_locallinear if abs(dist_from_cut)<0.25
 
-reg probation_ever right if abs(dist_from_cut)<0.25
-reg probation_ever right dist_from_cut rdist_from_cut if abs(dist_from_cut)<0.25
+reg probation_ever left if abs(dist_from_cut)<0.25
+reg probation_ever left dist_from_cut ldist_from_cut if abs(dist_from_cut)<0.25
 predict probation_ever_hat_locallinear if abs(dist_from_cut)<0.25
 
+/*Falling just below the cutoff leads you to be 99 percentage-points more likely 
+to be placed on probation your first year.
 
-/*Falling just below the cutoff leads you to be 67 percentage-points more likely 
-to be placed on probation your first year. Conversley, falling just above the 
-cutoff leads students to be 67 percentage-points less likely to be placed on probation 
-their first year. 
-
-Falling just below the cutoff leads students to be 44 percentage-points more likely 
+Falling just below the cutoff leads students to be 62 percentage-points more likely 
 to be placed on probation ever, less than the first year outcome variable. This 
 suggests that the benefits of the program are most effective the first year and 
 taper over time.*/
@@ -179,11 +175,14 @@ twoway (scatter probation_year1_mean bin,mcolor(black) msymbol(Oh)) ///
        (line probation_ever_hat_locallinear dist_from_cut if dist_from_cut>0,lcolor(lime)), ///
        saving(RD_graph_4b, replace) xline(0) legend(order(1 2 3 4))
 
-pause
-
 /*The two graphs confirm that treatment effects attenuate over time. Students 
 above the cutoff are more likely to be on probation at some point during their
-time at university compared to the first year, which is effectively 0 probability.*/
+time at university compared to the first year, which is effectively 0 probability.
+
+To put another way, the second graph suggests that about 30% of students went on 
+probation at some point despite the fact that their grades did not dip below the 
+threshold their first year in college. This aligns with the results from Q3.*/
+
 ********************************************************************************
 **                                   P5                                       **
 ********************************************************************************
@@ -194,40 +193,38 @@ year GPA and the probability of dropping out of the university after the 1st yea
 	  Why or why not?
 	• Given that falling below the cutoff affects dropout, do you think the estimated
 	  effect on the 2nd-year GPA is unbiased?*/
-
-*Define locals for following regressions
-local running dist_from_cut dist_from_cut2 dist_from_cut3 dist_from_cut4
-local cutoff rdist_from_cut rdist_from_cut2 rdist_from_cut3 rdist_from_cut4
-local controls male age_at_entry bpl_north_america english hsgrade_pct
-
-*Effect of falling below cutoff on 2nd-year GPA:
-reg nextGPA right `running' `cutoff'
-predict nextGPA_hat_poly
-label var nextGPA_hat_poly "NextGPA Poly"
-
-*Check robustness by including background covariates; results don't change
-reg nextGPA right `running' `cutoff' `controls'
-predict nextGPA_hat_poly_c
-label var nextGPA_hat_poly_c "NextGPA Poly w/ Controls"
-
-/*Students just below the cutoff have second year GPAs that are .17 grade points
-lower than students just bove the cutoff. Because the running variable and background
-covariates are smooth at the cutoff, this can be interpreted as a causal effect*/
+	  
 
 *Effect of falling below cutoff on probability of dropping out after the 1st year:
-reg left_school right `running' `cutoff'
+reg left_school left `running' `cutoff'
 predict left_school_hat_poly
 label var left_school_hat_poly "Left School Poly"
 
 *Check robustness by including background covariates; results don't change
-reg left_school right `running' `cutoff' `controls'
+reg left_school left `running' `cutoff' `controls'
 predict left_school_hat_poly_c
 label var left_school_hat_poly_c "Left School Poly w/ Controls"
 
-/*Students just below the cutoff are .15 percentage-points less likely to drop out
-of university than students just bove the cutoff. This is biased. If those likely
-to drop out have lower than average GPAs, then the effect on GPA is likely 
-upward biased*/
+/*Students just below the cutoff are .15 percentage-points more likely to drop out
+of university than students just above the cutoff; this is signifcant at the 90% 
+CI. This can be interpreted as a causal result given the continuity in the running
+variable and background covariates.*/
+
+*Effect of falling below cutoff on 2nd-year GPA:
+reg nextGPA left `running' `cutoff'
+predict nextGPA_hat_poly
+label var nextGPA_hat_poly "NextGPA Poly"
+
+*Check robustness by including background covariates; results don't change
+reg nextGPA left `running' `cutoff' `controls'
+predict nextGPA_hat_poly_c
+label var nextGPA_hat_poly_c "NextGPA Poly w/ Controls"
+
+/*Students just below the cutoff have second year GPAs that are .26 grade points
+higher than students just above the cutoff. This is likely downward biased. If 
+we assume that students with lower GPA's are less likely to drop out, then the
+student composition that sticks around until year two have lower GPAs than they
+would have otherwise.*/
 
 sort dist_from_cut
 twoway (scatter left_school_mean bin,mcolor(black) msymbol(Oh)) ///
@@ -243,8 +240,6 @@ twoway (scatter nextGPA_mean bin,mcolor(black) msymbol(Oh)) ///
        (fpfit nextGPA_hat_poly dist_from_cut if dist_from_cut>0,lcolor(blue)) ///
        (fpfit nextGPA_hat_poly_c dist_from_cut if dist_from_cut>0,lcolor(red)), ///
        saving(RD_graph_5b, replace) xline(0) legend(order(1 2 3 4))
-	   
-pause
 
 ********************************************************************************
 **                                   P6                                       **
@@ -253,46 +248,30 @@ pause
 within 4, 5, and 6 years. Also estimate these effects separately for students who 
 had above and below median grades in high school. Interpret your results.*/
 
-*Define locals for following regressions
-local running dist_from_cut dist_from_cut2 dist_from_cut3 dist_from_cut4
-local cutoff rdist_from_cut rdist_from_cut2 rdist_from_cut3 rdist_from_cut4
-local controls male age_at_entry bpl_north_america english hsgrade_pct
-
 *Probation effect of falling below cutoff on graduating in 4 years
-reg gradin4 right `running' `cutoff' 
+reg gradin4 left `running' `cutoff' 
 
-/*Students just above the cutoff are 4.7 percentage-points more likely to graduate
-in 4 years than those just below cutoff; significant at 90% CI*/
+reg gradin5 left `running' `cutoff'
 
-*Probation effect of falling below cutoff on graduating in 5 years
-reg gradin5 right `running' `cutoff'
+reg gradin6 left `running' `cutoff'
 
-/*Students just above the cutoff are 5.7 percentage-points more likely to graduate
-in 4 years than those just below cutoff; significant at 95% CI*/
-
-*Probation effect of falling below cutoff on graduating in 6 years
-reg gradin6 right `running' `cutoff'
-
-/*Students just above the cutoff are 4.7 percentage-points more likely to graduate
-in 4 years than those just below cutoff; significant at 90% CI*/
-
-pause 
+/*All probation during first year effects on graduation time are significant 
+insignificant.*/
 
 /*Probation effect of falling below cutoff on graduating in 4, 5 and 6 years for 
 above/below median grade in high school*/
-reg gradin4 right `running' `cutoff' if hsgrade_pct > 50
-reg gradin4 right `running' `cutoff' if hsgrade_pct < 50
+reg gradin4 left `running' `cutoff' if hsgrade_pct > 50
+reg gradin4 left `running' `cutoff' if hsgrade_pct < 50
 
-reg gradin5 right `running' `cutoff' if hsgrade_pct > 50
-reg gradin5 right `running' `cutoff' if hsgrade_pct < 50
+reg gradin5 left `running' `cutoff' if hsgrade_pct > 50
+reg gradin5 left `running' `cutoff' if hsgrade_pct < 50
 
-reg gradin6 right `running' `cutoff' if hsgrade_pct > 50
-reg gradin6 right `running' `cutoff' if hsgrade_pct < 50
+reg gradin6 left `running' `cutoff' if hsgrade_pct > 50
+reg gradin6 left `running' `cutoff' if hsgrade_pct < 50
 
-/*Only significant effects are that students below median high school grades who 
-do not receive probation are more likely to graduate in 5 or 6 years. This suggests
-that there are some long-term benefits to probation, if your objective is to get
-students to graduate in 4 years.*/
+/*Only significant effects are that students above median high school grade and 
+who receive probation are 10 percentage-points less likely to graduate in 6 years.
+Significant at the 90% CI. All other effects are statistically insignificant./
 
 ********************************************************************************
 **                                   P7                                       **
@@ -305,38 +284,32 @@ being placed on probation affects the probability of graduating within 4, 5, and
 do your estimates relate to your results for questions (3) and (6)?*/ 
 
 *2SLS to estimate how ever being placed on probation affects probability of graduating
-* in 4 years.
+*in 4 years.
 
-**Interact endogenous variable (probation_ever) with running variable polinomial 
-**terms for full RF regression:
-foreach i in dist_from_cut dist_from_cut2 dist_from_cut3 dist_from_cut4 {
-	gen T`i' = probation_ever*`i'
-}
 *Define locals for following regressions
 local running dist_from_cut dist_from_cut2 dist_from_cut3 dist_from_cut4
-local cutoff rdist_from_cut rdist_from_cut2 rdist_from_cut3 rdist_from_cut4
+local cutoff ldist_from_cut ldist_from_cut2 ldist_from_cut3 ldist_from_cut4
 local controls male age_at_entry bpl_north_america english hsgrade_pct
 
-local treated Tdist_from_cut Tdist_from_cut2 Tdist_from_cut3 Tdist_from_cut4  
-
 foreach i of varlist gradin4 gradin5 gradin6 {
-	qui reg probation_ever dist_from_cut `running' `cutoff' 
+	qui reg probation_ever left `running' `cutoff' 
 	estimates store first_stage
-	qui reg `i' dist_from_cut `running' `treated' 
+	qui reg `i' left `running' `cutoff'
 	estimates store reduced_form
 	suest first_stage reduced_form, r
-	nlcom [reduced_form_mean]dist_from_cut/[first_stage_mean]dist_from_cut
+	nlcom [reduced_form_mean]left/[first_stage_mean]left
 	pause
 }
 
-/*Those ever on probation after just falling into probation their first year were
-10 percentage-points less likely to graduate in 4 years than those who were never
-on probation; significant at 99% CI.*/
 
-/*Those ever on probation after just falling into probation their first year were
-12 percentage-points less likely to graduate in 5 years than those who were never
-on probation; significant at 99% CI.*/
+/*There are no statistically significant effects of ever being placed on probation
+and graduating in 4, 5 or 6 years.
 
-/*Those ever on probation after just falling into probation their first year were
-11 percentage-points less likely to graduate in 6 years than those who were never
-on probation; significant at 99% CI.*/
+The answer to (3) demontrated that less students were likely to be put on
+probation ever than probation in the first year (67 vs. 99%) if they fell below
+the threshold. This means that the RF effect will be scaled up more for the effect 
+of ever being on probation compared to probation in the firs year.
+
+These statistically insignifcant results align with Q6, suggesting that probation
+not important for graduation timing. That said, it appears to be important for
+preventing students from dropping out.*/
