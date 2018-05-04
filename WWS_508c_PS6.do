@@ -221,9 +221,9 @@ predict nextGPA_hat_poly_c
 label var nextGPA_hat_poly_c "NextGPA Poly w/ Controls"
 
 /*Students just below the cutoff have second year GPAs that are .26 grade points
-higher than students just above the cutoff. This is likely downward biased. If 
-we assume that students with lower GPA's are less likely to drop out, then the
-student composition that sticks around until year two have lower GPAs than they
+higher than students just above the cutoff. This is likely upward biased. If 
+we assume that students with lower GPA's are more likely to drop out, then the
+student composition that sticks around until year two have higher GPAs than they
 would have otherwise.*/
 
 sort dist_from_cut
@@ -311,5 +311,5 @@ the threshold. This means that the RF effect will be scaled up more for the effe
 of ever being on probation compared to probation in the firs year.
 
 These statistically insignifcant results align with Q6, suggesting that probation
-not important for graduation timing. That said, it appears to be important for
-preventing students from dropping out.*/
+not important for graduation timing. That said, it appears to be driving students 
+to drop out.*/
