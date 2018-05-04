@@ -1,0 +1,452 @@
+-----------------------------------------------------------------
+      name:  <unnamed>
+       log:  C:\Users\Chris\Documents\Princeton\WWS Spring 2018\W
+> WS 508c\PS6\PS6.log
+  log type:  text
+ opened on:   4 May 2018, 13:04:57
+
+. 
+. *Download outreg2
+. ssc install outreg2
+checking outreg2 consistency and verifying not already installed.
+> ..
+all files already exist and are up to date.
+
+. ssc install mdesc
+checking mdesc consistency and verifying not already installed...
+all files already exist and are up to date.
+
+. 
+. 
+. ***************************************************************
+> *****************
+. **                                   P1                        
+>                **
+. ***************************************************************
+> *****************
+. /*Plot the histogram of dist_from_cut, allowing for a discontin
+> uity at zero. You 
+> may choose your bin width. Do students bunch on either side of 
+> the probation cutoff? 
+> If bunching is apparent, what mechanism might explain it? If bu
+> nching is apparent, 
+> is it large or small in comparison to other observed noise in t
+> he histogram? Do 
+> you think your results represent a threat to the regression dis
+> continuity design?*/
+. 
+. mdesc
+
+    Variable    |     Missing          Total     Percent Missing
+----------------+-----------------------------------------------
+   dist_from_~t |           0         44,362           0.00
+   probation_~1 |           0         44,362           0.00
+   probation_~r |           0         44,362           0.00
+    left_school |           0         44,362           0.00
+        nextGPA |       3,780         44,362           8.52
+        gradin4 |      14,345         44,362          32.34
+        gradin5 |      19,781         44,362          44.59
+        gradin6 |      24,605         44,362          55.46
+    hsgrade_pct |           0         44,362           0.00
+           male |           0         44,362           0.00
+   age_at_entry |           0         44,362           0.00
+   bpl_north_~a |           0         44,362           0.00
+        english |           0         44,362           0.00
+----------------+-----------------------------------------------
+
+. su
+
+    Variable |        Obs        Mean    Std. Dev.       Min     
+>    Max
+-------------+---------------------------------------------------
+> ------
+dist_from_~t |     44,362    .9131829    .8989187       -1.6     
+>    2.8
+probation_~1 |     44,362    .1601821     .366779          0     
+>      1
+probation_~r |     44,362    .1963618    .3972498          0     
+>      1
+ left_school |     44,362    .0490284    .2159299          0     
+>      1
+     nextGPA |     40,582    1.046975    .9165701       -1.6     
+>    2.8
+-------------+---------------------------------------------------
+> ------
+     gradin4 |     30,017    .4466469    .4971536          0     
+>      1
+     gradin5 |     24,581    .6750742    .4683566          0     
+>      1
+     gradin6 |     19,757    .7531508    .4311892          0     
+>      1
+ hsgrade_pct |     44,362    50.17326    28.85888          1     
+>    100
+        male |     44,362    .3827826    .4860714          0     
+>      1
+-------------+---------------------------------------------------
+> ------
+age_at_entry |     44,362    18.66983    .7429326         17     
+>     21
+bpl_north_~a |     44,362    .8708579    .3353609          0     
+>      1
+     english |     44,362    .7137189    .4520275          0     
+>      1
+
+. 
+. *Testing out different BWs. .25 seems to be preferrable. 
+. hist dist_from_cut,start(-2) w(0.05) xline(0) saving(histogram_
+> 1,replace)
+(bin=96, start=-2, width=.05)
+(file histogram_1.gph saved)
+
+. 
+. hist dist_from_cut,start(-2) w(0.1) xline(0) saving(histogram_2,replace)
+(bin=48, start=-2, width=.1)
+(file histogram_2.gph saved)
+
+. 
+. hist dist_from_cut,start(-2) w(0.25) xline(0) saving(histogram_3,replace)
+(bin=20, start=-2, width=.25)
+(file histogram_3.gph saved)
+
+. 
+. 
+. /*There appears to be slight bunching, but it is hard to discern if it is statistically
+> significant. If it is, then we would have reason to believe that students knew of
+> the cutoff ex-ante; this would threaten the SRD due to selection bias. We can also
+> test other background covariates to see if they are smooth across the cutoff period
+> to better understand if RD is still valid.*/
+. 
+. ********************************************************************************
+. **                                   P2                                      **
+. ********************************************************************************
+. /*The last five variables in the dataset are predetermined. Test whether the conditional 
+> expectations of these variables change discontinuously at the cutoff. Do you think 
+> your results represent a threat to the regression discontinuity design?*/
+. 
+. *Generate bins for running variable: dist_from_cut
+. **Note on (floor) command: rounds values down to the next lowest defined interval; 
+. **Argument: interval x floor(expression/interval); assuming we want 0.25 GPA intervals: 
+. gen bin = .25*floor(dist_from_cut/.25)
+
+. bysort bin: egen dist_from_cut_mean = mean(dist_from_cut)
+
+. 
+. *Generage mean values for 5 background covariates:
+. foreach i in male age_at_entry bpl_north_america english hsgrade_pct {
+  2.         bysort bin: egen `i'_mean = mean(`i')
+  3.         label var `i'_mean "local means"
+  4. }
+
+. 
+. *Graph scatterplots for covariates along generated bins
+. sort dist_from_cut
+
+. foreach i of varlist male_mean-hsgrade_pct_mean {
+  2.         scatter `i' bin, mcolor(black) msymbol(Oh) xline(0) name(`i', replace) nodraw
+  3. }
+
+. graph combine male_mean age_at_entry_mean bpl_north_america_mean english_mean hsgrade_pct_mean
+
+. 
+. /*So far, only Born in North America could potentially be discontinuous. Once we 
+> change the bin width to 0.1 GPA points, we can confirm continuity. Otherwise, 
+> all background covariates conditional on the running variable appear smooth at 
+> the 0.25 bin width and do not seem to discredit our RD design.*/
+. 
+. ********************************************************************************
+. **                                   P3                                      **
+. ********************************************************************************
+. /*Estimate the effect of falling below the cutoff on the probability of being placed 
+> on 1st-year probation. Also estimate the effect of falling below the cutoff on the 
+> probability of ever being placed on probation. Which effect is larger? Why?*/
+. 
+. *Generate fourth-order polynomial terms for continuous running variable:
+. local i = 2
+
+. while `i' <= 4 {
+  2.         gen dist_from_cut`i' = dist_from_cut^`i'
+  3.         local i = `i' + 1
+  4. }
+
+. 
+. *Generate Eligibility Z_i: right if scored above threshold
+. gen right = dist_from_cut > 0
+
+. 
+. *Interact eligibility term "right" with running variable polinomial terms:
+. foreach i of dist_from_cut dist_from_cut2 dist_from_cut3 dist_from_cut4 {
+  2.         gen r`i' = right*`i'
+  3. }
+invalid syntax
+r(198);
+
+end of do-file
+r(198);
+-> . do "C:\Users\Chris\AppData\Local\Temp\STD1ec8_000000.tmp"
+
+. *Interact eligibility term "right" with running variable polinomial terms:
+. foreach i in dist_from_cut dist_from_cut2 dist_from_cut3 dist_from_cut4 {
+  2.         gen r`i' = right*`i'
+  3. }
+
+. 
+end of do-file
+-> . browse
+-> . do "C:\Users\Chris\AppData\Local\Temp\STD1ec8_000000.tmp"
+
+. *Define locals for following regressions
+. local running dist_from_cut dist_from_cut2 dist_from_cut3 dist_from_cut4
+
+. local cutoff rdist_from_cut rdist_from_cut2 rdist_from_cut3 rdist_from_cut4
+
+. 
+. *Effect of falling below cutoff on the probability of placed on probation 1st year:
+. reg probation_year1 `running' `cutoff'
+
+      Source |       SS           df       MS      Number of obs   =    44,362
+-------------+----------------------------------   F(8, 44353)     =  77709.76
+       Model |  5570.33569         8  696.291961   Prob > F        =    0.0000
+    Residual |  397.410038    44,353  .008960161   R-squared       =    0.9334
+-------------+----------------------------------   Adj R-squared   =    0.9334
+       Total |  5967.74573    44,361  .134526853   Root MSE        =    .09466
+
+---------------------------------------------------------------------------------
+probation_year1 |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+----------------+----------------------------------------------------------------
+  dist_from_cut |  -6.225663    .027694  -224.80   0.000    -6.279944   -6.171383
+ dist_from_cut2 |  -14.83852    .087745  -169.11   0.000     -15.0105   -14.66654
+ dist_from_cut3 |  -13.13511   .0939668  -139.78   0.000    -13.31929   -12.95093
+ dist_from_cut4 |  -3.854115   .0317013  -121.58   0.000     -3.91625   -3.791979
+ rdist_from_cut |   5.082092   .0356424   142.59   0.000     5.012232    5.151952
+rdist_from_cut2 |   16.35929   .0830776   196.92   0.000     16.19645    16.52212
+rdist_from_cut3 |   12.35548   .0973563   126.91   0.000     12.16466     12.5463
+rdist_from_cut4 |   3.989687   .0313566   127.24   0.000     3.928228    4.051147
+          _cons |   .2582736   .0022112   116.80   0.000     .2539395    .2626077
+---------------------------------------------------------------------------------
+
+. 
+. *Effect of falling below cutoff on the probability of placed on probation ever:
+. reg probation_ever `running' `cutoff'
+
+      Source |       SS           df       MS      Number of obs   =    44,362
+-------------+----------------------------------   F(8, 44353)     =  20474.85
+       Model |  5508.82753         8  688.603442   Prob > F        =    0.0000
+    Residual |  1491.66525    44,353  .033631665   R-squared       =    0.7869
+-------------+----------------------------------   Adj R-squared   =    0.7869
+       Total |  7000.49279    44,361  .157807371   Root MSE        =    .18339
+
+---------------------------------------------------------------------------------
+ probation_ever |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+----------------+----------------------------------------------------------------
+  dist_from_cut |    -3.9276   .0536539   -73.20   0.000    -4.032763   -3.822438
+ dist_from_cut2 |  -9.382274    .169996   -55.19   0.000    -9.715469   -9.049079
+ dist_from_cut3 |   -8.31841     .18205   -45.69   0.000    -8.675231   -7.961589
+ dist_from_cut4 |  -2.444268   .0614176   -39.80   0.000    -2.564647   -2.323888
+ rdist_from_cut |    2.24725   .0690531    32.54   0.000     2.111905    2.382595
+rdist_from_cut2 |   11.27109   .1609533    70.03   0.000     10.95562    11.58656
+rdist_from_cut3 |   7.437576   .1886167    39.43   0.000     7.067884    7.807268
+rdist_from_cut4 |   2.588688   .0607499    42.61   0.000     2.469617    2.707759
+          _cons |   .5315599    .004284   124.08   0.000     .5231631    .5399567
+---------------------------------------------------------------------------------
+
+. 
+end of do-file
+-> . do "C:\Users\Chris\AppData\Local\Temp\STD1ec8_000000.tmp"
+
+. *Effect of falling below cutoff on the probability of placed on
+>  probation 1st year:
+. reg probation_year1 right `running' `cutoff'
+
+      Source |       SS           df       MS      Number of obs 
+>   =    44,362
+-------------+----------------------------------   F(1, 44360)   
+>   >  99999.00
+       Model |  5699.06932         1  5699.06932   Prob > F      
+>   =    0.0000
+    Residual |  268.676407    44,360  .006056727   R-squared     
+>   =    0.9550
+-------------+----------------------------------   Adj R-squared 
+>   =    0.9550
+       Total |  5967.74573    44,361  .134526853   Root MSE      
+>   =    .07782
+
+-----------------------------------------------------------------
+> -------------
+probation_~1 |      Coef.   Std. Err.      t    P>|t|     [95% Co
+> n                                                              
+>  f. Interval]
+-------------+---------------------------------------------------
+> -------------
+       right |  -.9625154   .0009923  -970.03   0.000    -.964460
+> 3                                                              
+>     -.9605706
+       _cons |   .9625966    .000906  1062.49   0.000     .960820
+> 8                                                              
+>      .9643723
+-----------------------------------------------------------------
+> -------------
+
+. 
+. *Effect of falling below cutoff on the probability of placed on
+>  probation ever:
+. reg probation_ever right `running' `cutoff'
+
+      Source |       SS           df       MS      Number of obs 
+>   =    44,362
+-------------+----------------------------------   F(1, 44360)   
+>   >  99999.00
+       Model |  5376.56931         1  5376.56931   Prob > F      
+>   =    0.0000
+    Residual |  1623.92348    44,360  .036607833   R-squared     
+>   =    0.7680
+-------------+----------------------------------   Adj R-squared 
+>   =    0.7680
+       Total |  7000.49279    44,361  .157807371   Root MSE      
+>   =    .19133
+
+-----------------------------------------------------------------
+> -------------
+probation_~r |      Coef.   Std. Err.      t    P>|t|     [95% Co
+> n                                                              
+>  f. Interval]
+-------------+---------------------------------------------------
+> -------------
+       right |  -.9348854   .0024395  -383.24   0.000    -.939666
+> 7                                                              
+>      -.930104
+       _cons |    .975742   .0022273   438.07   0.000     .971376
+> 3                                                              
+>      .9801076
+-----------------------------------------------------------------
+> -------------
+
+. 
+end of do-file
+-> . do "C:\Users\Chris\AppData\Local\Temp\STD1ec8_000000.tmp"
+
+. *Define locals for following regressions
+. local running dist_from_cut dist_from_cut2 dist_from_cut3 dist_
+> from_cut4
+
+. local cutoff rdist_from_cut rdist_from_cut2 rdist_from_cut3 rdi
+> st_from_cut4
+
+. 
+. *Effect of falling below cutoff on the probability of placed on
+>  probation 1st year:
+. reg probation_year1 right `running' `cutoff'
+
+      Source |       SS           df       MS      Number of obs 
+>   =    44,362
+-------------+----------------------------------   F(9, 44352)   
+>   >  99999.00
+       Model |  5765.10419         9  640.567132   Prob > F      
+>   =    0.0000
+    Residual |  202.641538    44,352  .004568938   R-squared     
+>   =    0.9660
+-------------+----------------------------------   Adj R-squared 
+>   =    0.9660
+       Total |  5967.74573    44,361  .134526853   Root MSE      
+>   =    .06759
+
+-----------------------------------------------------------------
+> -------------
+probation_~1 |      Coef.   Std. Err.      t    P>|t|     [95% Co
+> n                                                              
+>  f. Interval]
+-------------+---------------------------------------------------
+> -------------
+       right |   -.670371   .0032469  -206.47   0.000    -.676734
+> 9                                                              
+>     -.6640071
+dist_from_~t |  -2.747612    .025978  -105.77   0.000    -2.79852
+> 9                                                              
+>     -2.696694
+dist_from_~2 |  -6.579027   .0743388   -88.50   0.000    -6.72473
+> 3                                                              
+>     -6.433322
+dist_from_~3 |  -5.843992   .0758254   -77.07   0.000    -5.99261
+> 2                                                              
+>     -5.695373
+dist_from_~4 |  -1.720177   .0248852   -69.12   0.000    -1.76895
+> 3                                                              
+>     -1.671402
+rdist_from~t |   2.745064   .0278552    98.55   0.000     2.69046
+> 7                                                              
+>      2.799661
+rdist_from~2 |   6.581349   .0759091    86.70   0.000     6.43256
+> 5                                                              
+>      6.730132
+rdist_from~3 |   5.843119   .0763414    76.54   0.000     5.69348
+> 9                                                              
+>       5.99275
+rdist_from~4 |   1.720293   .0249436    68.97   0.000     1.67140
+> 3                                                              
+>      1.769183
+       _cons |   .6713245   .0025486   263.41   0.000     .666329
+> 1                                                              
+>      .6763198
+-----------------------------------------------------------------
+> -------------
+
+. 
+. *Effect of falling below cutoff on the probability of placed on
+>  probation ever:
+. reg probation_ever right `running' `cutoff'
+
+      Source |       SS           df       MS      Number of obs 
+>   =    44,362
+-------------+----------------------------------   F(9, 44352)   
+>   =  19631.25
+       Model |  5595.79084         9  621.754538   Prob > F      
+>   =    0.0000
+    Residual |  1404.70195    44,352  .031671671   R-squared     
+>   =    0.7993
+-------------+----------------------------------   Adj R-squared 
+>   =    0.7993
+       Total |  7000.49279    44,361  .157807371   Root MSE      
+>   =    .17797
+
+-----------------------------------------------------------------
+> -------------
+probation_~r |      Coef.   Std. Err.      t    P>|t|     [95% Co
+> n                                                              
+>  f. Interval]
+-------------+---------------------------------------------------
+> -------------
+       right |  -.4479442   .0085485   -52.40   0.000    -.464699
+> 4                                                              
+>     -.4311889
+dist_from_~t |  -1.603554   .0683964   -23.45   0.000    -1.73761
+> 3                                                              
+>     -1.469496
+dist_from_~2 |  -3.863252   .1957236   -19.74   0.000    -4.24687
+> 3                                                              
+>      -3.47963
+dist_from_~3 |   -3.44646   .1996378   -17.26   0.000    -3.83775
+> 4                                                              
+>     -3.055167
+dist_from_~4 |  -1.018363   .0655193   -15.54   0.000    -1.14678
+> 2                                                              
+>     -.8899445
+rdist_from~t |     .68564   .0733388     9.35   0.000     .541894
+> 6                                                              
+>      .8293853
+rdist_from~2 |    4.73744    .199858    23.70   0.000     4.34571
+> 5                                                              
+>      5.129165
+rdist_from~3 |   3.085992   .2009962    15.35   0.000     2.69203
+> 6                                                              
+>      3.479948
+rdist_from~4 |   1.072271    .065673    16.33   0.000     .943550
+> 8                                                              
+>      1.200991
+       _cons |   .8075619   .0067102   120.35   0.000     .794409
+> 8                                                              
+>       .820714
+-----------------------------------------------------------------
+> -------------
+
+. 
+end of do-file
+-> . browse

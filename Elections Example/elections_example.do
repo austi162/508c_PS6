@@ -1,10 +1,10 @@
-cd "C:\Users\Chris\Documents\Princeton\WWS Spring 2018\WWS 508c\PS6\Elections Example"
+clear all
 
+cd "C:\Users\Chris\Documents\Princeton\WWS Spring 2018\WWS 508c\PS6\Elections Example"
+use elections_example
 #delimit ;
 pause on;
-clear all;
 
-use elections_example
 
 
 *the running variable in this RD analysis is the
