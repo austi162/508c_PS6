@@ -37,7 +37,7 @@ mdesc
 
 su
 
-*Testing out different BWs. .25 seems to be preferrable. 
+*Testing out different bin widths. .25 seems to be preferrable. 
 hist dist_from_cut,start(-2) w(0.05) xline(0) saving(histogram_1,replace)
 
 hist dist_from_cut,start(-2) w(0.1) xline(0) saving(histogram_2,replace)
