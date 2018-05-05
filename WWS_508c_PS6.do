@@ -175,13 +175,10 @@ twoway (scatter probation_year1_mean bin,mcolor(black) msymbol(Oh)) ///
        (line probation_ever_hat_locallinear dist_from_cut if dist_from_cut>0,lcolor(lime)), ///
        saving(RD_graph_4b, replace) xline(0) legend(order(1 2 3 4))
 
-/*The two graphs confirm that treatment effects attenuate over time. Students 
-above the cutoff are more likely to be on probation at some point during their
-time at university compared to the first year, which is effectively 0 probability.
-
-To put another way, the second graph suggests that about 30% of students went on 
-probation at some point despite the fact that their grades did not dip below the 
-threshold their first year in college. This aligns with the results from Q3.*/
+/*The two graphs confirm that students above the cutoff their first year are more 
+likely to be on probation at some point during their time at university compared 
+to the first year, which is effectively 0 probability. This aligns with the results 
+from Q3.*/
 
 ********************************************************************************
 **                                   P5                                       **
@@ -205,7 +202,7 @@ reg left_school left `running' `cutoff' `controls'
 predict left_school_hat_poly_c
 label var left_school_hat_poly_c "Left School Poly w/ Controls"
 
-/*Students just below the cutoff are .15 percentage-points more likely to drop out
+/*Students just below the cutoff are 2 percentage-points more likely to drop out
 of university than students just above the cutoff; this is signifcant at the 90% 
 CI. This can be interpreted as a causal result given the continuity in the running
 variable and background covariates.*/
@@ -301,10 +298,11 @@ foreach i of varlist gradin4 gradin5 gradin6 {
 and graduating in 4, 5 or 6 years.
 
 The answer to (3) demontrated that less students were likely to be put on
-probation ever than probation in the first year (67 vs. 99%) if they fell below
+probation ever than probation in the first year (62 vs. 99%) if they fell below
 the threshold. This means that the RF effect will be scaled up more for the effect 
-of ever being on probation compared to probation in the firs year.
+of ever being on probation compared to probation in the first year.
 
 These statistically insignifcant results align with Q6, suggesting that probation
-not important for graduation timing. That said, it appears to be driving students 
-to drop out.*/
+is not important for graduation timing. Because it does not appear to help with
+graduating on tie, and probation also drives students to drop out, I would not
+recommend the probation policy for marginal students.*/
