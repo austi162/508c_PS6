@@ -96,7 +96,7 @@ while `i' <= 4 {
 	local i = `i' + 1
 }
 
-*Generate Eligibility Z_i: right if scored above threshold
+*Generate Eligibility Z_i: left if scored below threshold
 gen left = dist_from_cut < 0
 
 *Interact eligibility term "left" with running variable polinomial terms:
