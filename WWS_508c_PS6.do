@@ -268,7 +268,10 @@ reg gradin6 left `running' `cutoff' if hsgrade_pct < 50
 
 /*Only significant effects are that students above median high school grade and 
 who receive probation are 10 percentage-points less likely to graduate in 6 years.
-Significant at the 90% CI. All other effects are statistically insignificant.*/
+Significant at the 90% CI. All other effects are statistically insignificant.
+
+It is also important to note that 32% of data are missing for graduating in 4 years,
+44% for graduating in 5 years, and 55% missing graduating in 6 years.*/
 
 ********************************************************************************
 **                                   P7                                       **
