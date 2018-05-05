@@ -232,14 +232,14 @@ twoway (scatter left_school_mean bin,mcolor(black) msymbol(Oh)) ///
        (fpfit left_school_hat_poly_c dist_from_cut if dist_from_cut<0,lcolor(red)) ///
        (fpfit left_school_hat_poly dist_from_cut if dist_from_cut>0,lcolor(blue)) ///
        (fpfit left_school_hat_poly_c dist_from_cut if dist_from_cut>0,lcolor(red)), ///
-       saving(RD_graph_5a, replace) xline(0) legend(order(1 2 3 4))
+       saving(RD_graph_5a, replace) xline(0) legend(order(1 2 3))
 	   
 twoway (scatter nextGPA_mean bin,mcolor(black) msymbol(Oh)) ///
        (fpfit nextGPA_hat_poly dist_from_cut if dist_from_cut<0,lcolor(blue)) ///
        (fpfit nextGPA_hat_poly_c dist_from_cut if dist_from_cut<0,lcolor(red)) ///
        (fpfit nextGPA_hat_poly dist_from_cut if dist_from_cut>0,lcolor(blue)) ///
        (fpfit nextGPA_hat_poly_c dist_from_cut if dist_from_cut>0,lcolor(red)), ///
-       saving(RD_graph_5b, replace) xline(0) legend(order(1 2 3 4))
+       saving(RD_graph_5b, replace) xline(0) legend(order(1 2 3))
 
 ********************************************************************************
 **                                   P6                                       **
@@ -271,7 +271,7 @@ reg gradin6 left `running' `cutoff' if hsgrade_pct < 50
 
 /*Only significant effects are that students above median high school grade and 
 who receive probation are 10 percentage-points less likely to graduate in 6 years.
-Significant at the 90% CI. All other effects are statistically insignificant./
+Significant at the 90% CI. All other effects are statistically insignificant.*/
 
 ********************************************************************************
 **                                   P7                                       **
@@ -285,11 +285,6 @@ do your estimates relate to your results for questions (3) and (6)?*/
 
 *2SLS to estimate how ever being placed on probation affects probability of graduating
 *in 4 years.
-
-*Define locals for following regressions
-local running dist_from_cut dist_from_cut2 dist_from_cut3 dist_from_cut4
-local cutoff ldist_from_cut ldist_from_cut2 ldist_from_cut3 ldist_from_cut4
-local controls male age_at_entry bpl_north_america english hsgrade_pct
 
 foreach i of varlist gradin4 gradin5 gradin6 {
 	qui reg probation_ever left `running' `cutoff' 
